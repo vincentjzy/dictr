@@ -79,3 +79,68 @@ def validate_speckle(model,
     results['dataset_AEE_s1+'] = s10plus
 
     return results
+
+from loss import warp, flow_loss_func_unsupervised
+
+@torch.no_grad()
+def validate_speckle_unsupervised(model,
+                     attn_splits_list=False,
+                     corr_radius_list=False,
+                     prop_radius_list=False,
+                     ):
+    model.eval()
+
+    val_dataset = SpeckleDataset('./dataset/eval', 320)
+    print('Number of validation image pairs: %d' % len(val_dataset))
+
+    results = {}
+
+    img_loss_list = []
+    total_loss = []
+ 
+
+    for val_id in range(len(val_dataset)):
+        img0, img1, flow_gt, _ = val_dataset[val_id]
+        img0 = img0[None].cuda()
+        img1 = img1[None].cuda()
+
+        removal_radius = 4
+        _, h, w = flow_gt.size()
+
+        valid_slice = (
+        slice(None),
+        slice(None),
+        slice(removal_radius-1, h-removal_radius+1),
+        slice(removal_radius-1, w-removal_radius+1)
+    )  
+
+        results_dict = model(img0, img1,
+                             attn_splits_list=attn_splits_list,
+                             corr_radius_list=corr_radius_list,
+                             prop_radius_list=prop_radius_list,
+                             )
+
+        # useful when using parallel branches
+        flow_pr = results_dict['flow_preds'][-1]
+
+        flow = flow_pr.cuda()
+
+        img0_warp = warp(img1, flow)
+
+        i_loss = torch.mean((img0[valid_slice] - img0_warp[valid_slice]).abs())
+        
+        img_loss_list.append(i_loss.cpu())
+
+        i_total_loss, _ = flow_loss_func_unsupervised(results_dict['flow_preds'], img0, img1)
+
+        total_loss.append(i_total_loss.cpu())
+
+    img_loss = torch.mean(torch.tensor(img_loss_list))
+    total_loss = torch.mean(torch.tensor(total_loss))
+
+    print("Validation dataset loss, Gray: %.3f, Total: %.7f" % (img_loss, total_loss))
+
+    results['Gray'] = img_loss
+    results['Total'] = total_loss
+
+    return results

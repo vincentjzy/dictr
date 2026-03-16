@@ -1,0 +1,11 @@
+CUDA_VISIBLE_DEVICES=4 python main.py \
+--v1 False \
+--exp \
+--resume checkpoints/v2/Base.pth \
+--exp_type rotation mei shear \
+--num_transformer_layers 6 \
+--upsample_factor 2 \
+--num_scales 2 \
+--attn_splits_list 4 16 \
+--corr_radius_list -1 4 \
+--feature_channels 256 \

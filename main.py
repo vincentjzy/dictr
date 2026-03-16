@@ -8,9 +8,9 @@ import os
 
 from utils.datasets import build_train_dataset
 from networks.dictr import DICTr
-from loss import flow_loss_func
-from evaluate import validate_speckle
-from experiment import custom, rotation, tension, star5, mei, realcrack
+from loss import flow_loss_func, flow_loss_func_unsupervised
+from evaluate import validate_speckle, validate_speckle_unsupervised
+from experiment import custom, rotation_128, rotation_256, tension, star5, mei_128, realcrack, mei_256, shear
 from utils.logger import Logger
 from utils import misc
 from utils.dist_utils import get_dist_info, init_dist, setup_for_distributed
@@ -20,6 +20,8 @@ def get_args_parser():
     parser = argparse.ArgumentParser()
 
     # general
+    parser.add_argument('--supervised', default=True, type=bool,
+                        help='whether to use supervised loss, set false for unsupervised training and inference')
     parser.add_argument('--checkpoint_dir', default='tmp', type=str,
                         help='where to save the training log and models')
     parser.add_argument('--stage', default=['speckle'], type=str,
@@ -28,6 +30,8 @@ def get_args_parser():
                         help='the input should be divisible by padding_factor, otherwise do padding')
     parser.add_argument('--val_dataset', default=['speckle'], type=str, nargs='+',
                         help='validation dataset')
+    parser.add_argument('--v1', default=True, type=bool,
+                        help='v1.0 or v2.0 of DICTr, v1.0 deals with 128x128 input and v2.0 deals with 256x256 input, this parameter is for experiment only and does not affect your own model definition')
 
     # training strategy
     parser.add_argument('--lr', default=2e-4, type=float)
@@ -53,7 +57,7 @@ def get_args_parser():
     parser.add_argument('--num_scales', default=2, type=int,
                         help='DICTr use 2 scale features, 1/4 for global match and 1/2 for refinement')
     parser.add_argument('--feature_channels', default=128, type=int,
-                        help='DICTr use 128 channels for higher-level description of features')
+                        help='DICTr use 128 channels for higher-level description of features, unsupervised DICTr use 256 channels')
     parser.add_argument('--upsample_factor', default=2, type=int,
                         help='DICTr get full resolution result by convex upsampling from 1/2 resolution')
     parser.add_argument('--num_transformer_layers', default=12, type=int,
@@ -185,37 +189,53 @@ def main(args):
 
     # experiment
     if args.exp:
-        if 'custom' in args.exp_type:
-            custom(model_without_ddp,
-                   attn_splits_list=args.attn_splits_list,
-                   corr_radius_list=args.corr_radius_list,
-                   prop_radius_list=args.prop_radius_list)
-        if 'rotation' in args.exp_type:
-            rotation(model_without_ddp,
-                     attn_splits_list=args.attn_splits_list,
-                     corr_radius_list=args.corr_radius_list,
-                     prop_radius_list=args.prop_radius_list)
-        if 'tension' in args.exp_type:
-            tension(model_without_ddp,
+        if args.v1:
+            if 'custom' in args.exp_type:
+                custom(model_without_ddp,
                     attn_splits_list=args.attn_splits_list,
                     corr_radius_list=args.corr_radius_list,
                     prop_radius_list=args.prop_radius_list)
-        if 'star5' in args.exp_type:
-            star5(model_without_ddp,
-                  attn_splits_list=args.attn_splits_list,
-                  corr_radius_list=args.corr_radius_list,
-                  prop_radius_list=args.prop_radius_list)
-        if 'mei' in args.exp_type:
-            mei(model_without_ddp,
-                attn_splits_list=args.attn_splits_list,
-                corr_radius_list=args.corr_radius_list,
-                prop_radius_list=args.prop_radius_list)
-        if 'realcrack' in args.exp_type:
-            realcrack(model_without_ddp,
-                      attn_splits_list=args.attn_splits_list,
-                      corr_radius_list=args.corr_radius_list,
-                      prop_radius_list=args.prop_radius_list)
-
+            if 'rotation' in args.exp_type:
+                rotation_128(model_without_ddp,
+                        attn_splits_list=args.attn_splits_list,
+                        corr_radius_list=args.corr_radius_list,
+                        prop_radius_list=args.prop_radius_list)
+            if 'tension' in args.exp_type:
+                tension(model_without_ddp,
+                        attn_splits_list=args.attn_splits_list,
+                        corr_radius_list=args.corr_radius_list,
+                        prop_radius_list=args.prop_radius_list)
+            if 'star5' in args.exp_type:
+                star5(model_without_ddp,
+                    attn_splits_list=args.attn_splits_list,
+                    corr_radius_list=args.corr_radius_list,
+                    prop_radius_list=args.prop_radius_list)
+            if 'mei' in args.exp_type:
+                mei_128(model_without_ddp,
+                    attn_splits_list=args.attn_splits_list,
+                    corr_radius_list=args.corr_radius_list,
+                    prop_radius_list=args.prop_radius_list)
+            if 'realcrack' in args.exp_type:
+                realcrack(model_without_ddp,
+                        attn_splits_list=args.attn_splits_list,
+                        corr_radius_list=args.corr_radius_list,
+                        prop_radius_list=args.prop_radius_list)
+        if not args.v1:
+            if 'rotation' in args.exp_type:
+                rotation_256(model_without_ddp,
+                        attn_splits_list=args.attn_splits_list,
+                        corr_radius_list=args.corr_radius_list,
+                        prop_radius_list=args.prop_radius_list)
+            if 'mei' in args.exp_type:
+                mei_256(model_without_ddp,
+                    attn_splits_list=args.attn_splits_list,
+                    corr_radius_list=args.corr_radius_list,
+                    prop_radius_list=args.prop_radius_list)
+            if 'shear' in args.exp_type:
+                shear(model_without_ddp,
+                        attn_splits_list=args.attn_splits_list,
+                        corr_radius_list=args.corr_radius_list,
+                        prop_radius_list=args.prop_radius_list)
         return
 
     # training datset
@@ -250,7 +270,7 @@ def main(args):
     if args.local_rank == 0:
         summary_writer = SummaryWriter(args.checkpoint_dir)
         logger = Logger(lr_scheduler, summary_writer, args.summary_freq,
-                        start_step=start_step)
+                        start_step=start_step, supervised=args.supervised)
 
     total_steps = start_step
     epoch = start_epoch
@@ -273,8 +293,12 @@ def main(args):
                                  )
 
             flow_preds = results_dict['flow_preds']
-
-            loss, metrics = flow_loss_func(flow_preds, flow_gt, valid,
+            if args.supervised:
+                loss, metrics = flow_loss_func(flow_preds, flow_gt, valid,
+                                               gamma=args.gamma,
+                                               )
+            else:
+                loss, metrics = flow_loss_func_unsupervised(flow_preds, img1, img2,
                                            gamma=args.gamma,
                                            )
 
@@ -328,7 +352,14 @@ def main(args):
                 val_results = {}
 
                 if 'speckle' in args.val_dataset:
-                    results_dict = validate_speckle(model_without_ddp,
+                    if args.supervised:
+                        results_dict = validate_speckle(model_without_ddp,
+                                                    attn_splits_list=args.attn_splits_list,
+                                                    corr_radius_list=args.corr_radius_list,
+                                                    prop_radius_list=args.prop_radius_list,
+                                                    )
+                    else:
+                        results_dict = validate_speckle_unsupervised(model_without_ddp,
                                                     attn_splits_list=args.attn_splits_list,
                                                     corr_radius_list=args.corr_radius_list,
                                                     prop_radius_list=args.prop_radius_list,
@@ -343,8 +374,12 @@ def main(args):
                     val_file = os.path.join(args.checkpoint_dir, 'val_results.txt')
                     with open(val_file, 'a') as f:
                         f.write('step: %06d\n' % total_steps)
-
-                        metrics = ['dataset_AEE', 'dataset_AEE_s0_0.5', 'dataset_AEE_s0.5_1', 'dataset_AEE_s1+']
+                        if args.supervised:
+                            f.write('supervised training\n')
+                            metrics = ['dataset_AEE', 'dataset_AEE_s0_0.5', 'dataset_AEE_s0.5_1', 'dataset_AEE_s1+']
+                        else:
+                            f.write('unsupervised training\n')
+                            metrics = ['Gray', 'Total']
 
                         eval_metrics = []
                         for metric in metrics:

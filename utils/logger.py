@@ -3,16 +3,23 @@ class Logger:
                  summary_writer,
                  summary_freq=100,
                  start_step=0,
+                 supervised=True
                  ):
         self.lr_scheduler = lr_scheduler
         self.total_steps = start_step
         self.running_loss = {}
         self.summary_writer = summary_writer
         self.summary_freq = summary_freq
+        self.supervised = supervised
 
     def print_training_status(self, mode='train'):
 
-        print('step: %06d \t AEE: %.3f' % (self.total_steps, self.running_loss['AEE'] / self.summary_freq))
+        if self.supervised:
+            print('step: %06d \t AEE: %.3f' % (self.total_steps, self.running_loss['AEE'] / self.summary_freq))
+        else:
+            print('step: %06d \t Gray: %.5f \t MrDGC: %.3f \t Total: %.5f' % 
+                (self.total_steps, self.running_loss['Gray'] / self.summary_freq, self.running_loss['MrDGC'] /
+                  self.summary_freq, self.running_loss['Total'] / self.summary_freq))
 
         for k in self.running_loss:
             self.summary_writer.add_scalar(mode + '/' + k,

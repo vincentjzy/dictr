@@ -73,7 +73,7 @@ matlab -nodisplay -nosplash
 
 `main_v1.m`: A dataset with a size of 128×128-pixel is generated, where the original images are rendered based on the Boolean model.
 
-`main_v2.m`: A dataset with a size of 256×256-pixel is generated, where the original images are captured by real cameras.
+`main_v2.m`: A dataset with a size of 256×256-pixel is generated, where the original images are captured by real cameras. The original dataset `RealWorldSpeckle` is avalible at [OpenCorr official website](https://opencorr.org/wp-content/uploads/2026/03/RealWorldSpeckle.7z).
 
 ## Training
 

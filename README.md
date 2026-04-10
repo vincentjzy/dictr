@@ -22,19 +22,29 @@ The key issue of unsupervised learning is the design of loss function. In unsupe
 
 #### 1. Photometric Consistency Loss ($l_g$)
 
-- $l_{g}=\sum_{j=0}^{2} \frac{w_{j}}{N K_{g}} \sum_{i=0}^{N}\left\| I_{0}\left(x_{i}\right)-I_{1}^{j}\left(x_{i}-u_{j}\left(x_{i}\right)\right)\right\| _{1}$
-- Weights ($w_j$): $w_{j}=\frac{0.9^j}{\sum_{k=0}^{2} 0.9^{k}}$ (exponential decay with base 0.9, i.e., intensity differences at higher resolution are assigned  with higher weights); normalized by $N$ (total number of pixels) and $K_g=255$ (max grayscale value for 8-bit image).
+```math
+l_{g}=\sum_{j=0}^{2} \frac{w_{j}}{N K_{g}} \sum_{i=0}^{N}\left\| I_{0}\left(x_{i}\right)-I_{1}^{j}\left(x_{i}-u_{j}\left(x_{i}\right)\right)\right\| _{1}
+```
+
+Weights ($w_j$): $w_{j}=\frac{0.9^j}{\sum_{k=0}^{2} 0.9^{k}}$ (exponential decay with base 0.9, i.e., intensity differences at higher resolution are assigned  with higher weights); normalized by $N$ (total number of pixels) and $K_g=255$ (max grayscale value for 8-bit image).
 
 #### 2. Multi-resolution Displacement Gradient Consistency Loss ($l_m$)
 
-- $l_{m}=\frac{h\left\| g_{h}-g_{f}\right\| _{1}+q\left\| g_{q}-g_{f}\right\| _{1}}{N K_{m}}$
-- Displacement gradients calculated via central difference (forward/backward for edge pixels); weighted as $h=0.9$ (1/2 resolution) and $q=0.1$ (1/4 resolution) to preserve genuine high-frequency deformation.
-- Normalized by $N$ (total number of pixels) and $K_m$ (a dimensionless factor determined via 1-epoch trial training).
+```math
+l_{m}=\frac{h\left\|g_{h}-g_{f}\right\|_{1}+q\left\|g_{q}-g_{f}\right\|_{1}}{N K_{m}}
+```
+
+Displacement gradients calculated via central difference (forward/backward for edge pixels); weighted as $h=0.9$ (1/2 resolution) and $q=0.1$ (1/4 resolution) to preserve genuine high-frequency deformation.
+
+Normalized by $N$ (total number of pixels) and $K_m$ (a dimensionless factor determined via 1-epoch trial training).
 
 #### 3. Total Loss Function
 
-- $l_{I}=w_{g} l_{g}+w_{m} l_{m}$
-- Optimal weight ratio for DICTr: $w_g : w_m = 4 : 1$.
+```math
+l_{I}=w_{g} l_{g}+w_{m} l_{m}
+```
+
+Optimal weight ratio for DICTr: $w_g : w_m = 4 : 1$.
 
 ## Prerequisite
 
@@ -202,15 +212,15 @@ The pretrained models provided in the repository adopts the following hyperparam
 
 ```bibtex
 @article{ZHOU2025108568,
-title = {Transformer based deep learning for digital image correlation},
-journal = {Optics and Lasers in Engineering},
-volume = {184},
-pages = {108568},
-year = {2025},
-issn = {0143-8166},
-doi = {https://doi.org/10.1016/j.optlaseng.2024.108568},
-url = {https://www.sciencedirect.com/science/article/pii/S0143816624005463},
-author = {Yifei Zhou and Qianjiang Zuo and Nan Chen and Licheng Zhou and Bao Yang and Zejia Liu and Yiping Liu and Liqun Tang and Shoubin Dong and Zhenyu Jiang}
+    title = {Transformer based deep learning for digital image correlation},
+    journal = {Optics and Lasers in Engineering},
+    volume = {184},
+    pages = {108568},
+    year = {2025},
+    issn = {0143-8166},
+    doi = {https://doi.org/10.1016/j.optlaseng.2024.108568},
+    url = {https://www.sciencedirect.com/science/article/pii/S0143816624005463},
+    author = {Yifei Zhou and Qianjiang Zuo and Nan Chen and Licheng Zhou and Bao Yang and Zejia Liu and Yiping Liu and Liqun Tang and Shoubin Dong and Zhenyu Jiang}
 }
 
 @article{HE2026114939,
@@ -228,7 +238,7 @@ author = {Yifei Zhou and Qianjiang Zuo and Nan Chen and Licheng Zhou and Bao Yan
 
 ## Extension to DVC
 
-An extension of DICTr to digital volume correlation (DVC) can be found [here](https://github.com/vincentjzy/dvctr).
+An extension of DICTr to digital volume correlation (DVC) can be found in [DVCTr](https://github.com/vincentjzy/dvctr).
 
 ## Acknowledgement
 
